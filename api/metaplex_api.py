@@ -10,14 +10,15 @@ from metaplex_python_api.metaplex.transactions import (
     burn,
     update_token_metadata,
 )
-from ..utils.execution_engine import execute
+from metaplex_python_api.utils.execution_engine import execute
 
 
 class MetaplexAPI:
     def __init__(self, cfg):
-        self.private_key = list(base58.b58decode(cfg["PRIVATE_KEY"]))[:32]
+        # self.private_key = list(base58.b58decode(cfg["PRIVATE_KEY"]))[:32]
+        self.private_key = cfg["PRIVATE_KEY"]
         self.public_key = cfg["PUBLIC_KEY"]
-        self.keypair = Keypair(self.private_key)
+        self.keypair = cfg["KEYPAIR"]
         self.cipher = Fernet(cfg["DECRYPTION_KEY"])
 
     def wallet(self):
@@ -43,26 +44,30 @@ class MetaplexAPI:
         Deploy a contract to the blockchain (on network that support contracts). Takes the network ID and contract name, plus initialisers of name and symbol. Process may vary significantly between blockchains.
         Returns status code of success or fail, the contract address, and the native transaction data.
         """
-        try:
-            tx, signers, contract = deploy(
-                api_endpoint, self.keypair, name, symbol, fees
-            )
-            print(contract)
-            resp = execute(
-                api_endpoint,
-                tx,
-                signers,
-                max_retries=max_retries,
-                skip_confirmation=skip_confirmation,
-                max_timeout=max_timeout,
-                target=target,
-                finalized=finalized,
-            )
-            resp["contract"] = contract
-            resp["status"] = 200
-            return json.dumps(resp)
-        except:
-            return json.dumps({"status": 400})
+        # try:
+        tx, signers, contract = deploy(api_endpoint, self.keypair, name, symbol, fees)
+        print(contract)
+        print("signers")
+        print(signers)
+        resp = execute(
+            api_endpoint,
+            tx,
+            signers,
+            max_retries=max_retries,
+            skip_confirmation=skip_confirmation,
+            max_timeout=max_timeout,
+            target=target,
+            finalized=finalized,
+        )
+        print("resp")
+        print(resp)
+        print(dir(resp))
+        resp["contract"] = contract
+        resp["status"] = 200
+        return json.dumps(resp)
+        # except Exception as e:
+        #     print(e)
+        #     return json.dumps({"status": 400})
 
     def topup(
         self,

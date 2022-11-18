@@ -1,23 +1,42 @@
 import time
-from solana.keypair import Keypair 
+from solana.keypair import Keypair
 from solana.rpc.api import Client
-from solana.rpc.types import TxOpts 
+from solana.rpc.types import TxOpts
 
-def execute(api_endpoint, tx, signers, max_retries=3, skip_confirmation=True, max_timeout=60, target=20, finalized=True):
+
+def execute(
+    api_endpoint,
+    tx,
+    signers,
+    max_retries=3,
+    skip_confirmation=True,
+    max_timeout=60,
+    target=20,
+    finalized=True,
+):
     client = Client(api_endpoint)
-    signers = list(map(Keypair, set(map(lambda s: s.seed, signers))))
-    for attempt in range(max_retries):
-        try:
-            result = client.send_transaction(tx, *signers, opts=TxOpts(skip_preflight=True))
-            print(result)
-            signatures = [x.signature for x in tx.signatures]
-            if not skip_confirmation:
-                await_confirmation(client, signatures, max_timeout, target, finalized)
-            return result
-        except Exception as e:
-            print(f"Failed attempt {attempt}: {e}")
-            continue
-    raise e
+    # signers = list(map(Keypair, set(map(lambda s: s.seed, signers))))
+    all_exceptions = []
+    # for attempt in range(max_retries):
+    # try:
+    result = client.send_transaction(tx, *signers, opts=TxOpts(skip_preflight=True))
+    print(result)
+    print("tx.signature")
+    print(tx.signatures)
+    print(tx.signatures[0])
+    print(dir(tx.signatures[0]))
+    print(type((tx.signatures[0])))
+    # signatures = [x.signature for x in tx.signatures]
+    signatures = [tx.__str__() for tx in tx.signatures]
+    if not skip_confirmation:
+        await_confirmation(client, signatures, max_timeout, target, finalized)
+        return result
+    #     except Exception as e:
+    #         all_exceptions.append(e)
+    #         print(f"Failed attempt {attempt}: {e}")
+    #         continue
+    # raise Exception(all_exceptions)
+
 
 def await_confirmation(client, signatures, max_timeout=60, target=20, finalized=True):
     elapsed = 0
@@ -28,7 +47,9 @@ def await_confirmation(client, signatures, max_timeout=60, target=20, finalized=
         resp = client.get_signature_statuses(signatures)
         if resp["result"]["value"][0] is not None:
             confirmations = resp["result"]["value"][0]["confirmations"]
-            is_finalized = resp["result"]["value"][0]["confirmationStatus"] == "finalized"
+            is_finalized = (
+                resp["result"]["value"][0]["confirmationStatus"] == "finalized"
+            )
         else:
             continue
         if not finalized:

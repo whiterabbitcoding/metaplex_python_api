@@ -41,6 +41,9 @@ def deploy(api_endpoint, source_account, name, symbol, fees):
     # List non-derived accounts
     mint_account = Keypair()
     token_account = TOKEN_PROGRAM_ID
+    print("here")
+    print(mint_account.public_key)
+    print(dir(mint_account))
     # List signers
     signers = [source_account, mint_account]
     # Start transaction
@@ -212,6 +215,7 @@ def mint(api_endpoint, source_account, contract_key, dest_key, link, supply=1):
     )
     tx = tx.add(mint_to_ix)
     metadata = get_metadata(client, mint_account)
+
     update_metadata_data = update_metadata_instruction_data(
         metadata["data"]["name"],
         metadata["data"]["symbol"],
